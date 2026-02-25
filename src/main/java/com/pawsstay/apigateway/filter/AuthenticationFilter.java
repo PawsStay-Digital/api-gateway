@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractChangeRequestUriGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
@@ -51,15 +52,24 @@ public class AuthenticationFilter extends AbstractChangeRequestUriGatewayFilterF
                 }
 
                 try {
+                    Logger.info("validation before");
                     // 3. validation
                     jwtUtils.validateToken(authHeader);
-                    Logger.debug("validation success");
+                    Logger.info("validation success");
 
-                    // 4. TODO parse email/role into Header and send to backend services
-                    // exchange.getRequest().mutate().header("loggedInUser", jwtUtils.extractEmail(authHeader)).build();
+
+                    // 在 validateToken 成功後加入：
+                    String email = jwtUtils.extractEmail(authHeader);
+                    Logger.info("extractEmail email {}",  email);
+                    ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                            .header("X-User-Email", email)
+                            .build();
+
+                    // 4. 將修改後的 request 傳遞給下一個 Filter 或服務
+                    return chain.filter(exchange.mutate().request(modifiedRequest).build());
 
                 } catch (Exception e) {
-                    Logger.warn("invalidate token");
+                    Logger.warn("something wrong", e);
                     exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 }

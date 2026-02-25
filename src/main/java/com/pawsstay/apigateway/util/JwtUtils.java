@@ -20,6 +20,7 @@ public class JwtUtils {
         if (this.SECRET_KEY == null) {
             throw new RuntimeException("JWT Secret Key is not configured!");
         }
+        System.out.println(SECRET_KEY);
         this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -29,5 +30,14 @@ public class JwtUtils {
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token);
+    }
+
+    public String extractEmail(String token) {
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 }
