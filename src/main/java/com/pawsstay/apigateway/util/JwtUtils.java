@@ -20,12 +20,10 @@ public class JwtUtils {
         if (this.SECRET_KEY == null) {
             throw new RuntimeException("JWT Secret Key is not configured!");
         }
-        System.out.println(SECRET_KEY);
         this.key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
     public void validateToken(final String token) {
-        // 解析 Token，如果過期、簽章錯誤、或格式不對，Jwts 會直接拋出 Exception
         Jwts.parser()
                 .verifyWith(key)
                 .build()

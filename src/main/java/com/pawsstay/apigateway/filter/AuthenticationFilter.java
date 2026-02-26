@@ -16,7 +16,7 @@ import java.util.Optional;
 
 @Component
 public class AuthenticationFilter extends AbstractChangeRequestUriGatewayFilterFactory<AuthenticationFilter.Config> {
-    private final Logger Logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private final Logger log = LoggerFactory.getLogger(AuthenticationFilter.class);
 
     private final RouteValidator validator;
     private final JwtUtils jwtUtils;
@@ -41,7 +41,7 @@ public class AuthenticationFilter extends AbstractChangeRequestUriGatewayFilterF
             if (validator.isSecured.test(exchange.getRequest())) {
                 // 2. check up authorization header isExist
                 if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                    Logger.warn("missing authorization header");
+                    log.warn("missing authorization header");
                     exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 }
@@ -52,24 +52,15 @@ public class AuthenticationFilter extends AbstractChangeRequestUriGatewayFilterF
                 }
 
                 try {
-                    Logger.info("validation before");
-                    // 3. validation
-                    jwtUtils.validateToken(authHeader);
-                    Logger.info("validation success");
-
-
-                    // 在 validateToken 成功後加入：
                     String email = jwtUtils.extractEmail(authHeader);
-                    Logger.info("extractEmail email {}",  email);
+                    log.info("extractEmail email {}",  email);
                     ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                             .header("X-User-Email", email)
                             .build();
-
-                    // 4. 將修改後的 request 傳遞給下一個 Filter 或服務
                     return chain.filter(exchange.mutate().request(modifiedRequest).build());
 
                 } catch (Exception e) {
-                    Logger.warn("something wrong", e);
+                    log.warn("something wrong", e);
                     exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 }
