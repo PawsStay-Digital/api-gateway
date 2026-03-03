@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
 import java.net.URI;
+import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -27,7 +28,8 @@ public class AuthenticationFilter extends AbstractChangeRequestUriGatewayFilterF
         this.jwtUtils = jwtUtils;
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 
     @Override
     protected Optional<URI> determineRequestUri(ServerWebExchange exchange, Config config) {
@@ -53,9 +55,13 @@ public class AuthenticationFilter extends AbstractChangeRequestUriGatewayFilterF
 
                 try {
                     String email = jwtUtils.extractEmail(authHeader);
-                    log.info("extractEmail email {}",  email);
+                    Map<String, String> userDetail = jwtUtils.extractUserDetail(authHeader);
+                    log.info("extractEmail email {}", email);
                     ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                            .header("X-User-Email", email)
+                            .header("X-User-Email", userDetail.get("email"))
+                            .header("X-User-Username", userDetail.get("username"))
+                            .header("X-User-Role", userDetail.get("role"))
+                            .header("X-User-Id", userDetail.get("userId"))
                             .build();
                     return chain.filter(exchange.mutate().request(modifiedRequest).build());
 
