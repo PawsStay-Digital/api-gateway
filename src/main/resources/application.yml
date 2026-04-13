@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: pawsstay-gateway
+  threads:
+    virtual:
+      enabled: true
+  cloud:
+    gateway:
+      # Global CORS Configuration
+      # Routing Rules
+      server:
+        webflux:
+          routes:
+                    - id: auth-service
+                      uri: http://auth-service:8083
+                      predicates:
+                        -  Path=/api/v1/auth/**
+                    - id: owner-service-route
+                      uri: http://owner-service:8081
+                      predicates:
+                        - Path=/api/v1/owners/**
+                      filters:
+                        - JwtAuthFilter
+                    # Route to Pet Service
+                    - id: pet-service-route
+                      uri: http://pet-service:8082
+                      predicates:
+                        - Path=/api/v1/pets/**
+                      filters:
+                        - JwtAuthFilter
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                          allowedOrigins: "http://localhost:3000"
+                          allowedMethods:
+                            - GET
+                            - POST
+                            - PUT
+                            - DELETE
+                            - OPTIONS
+                          allowedHeaders: "*"
+
+# Monitoring endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+jwt:
+  secret: ${JWT_SECRET}
